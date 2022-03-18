@@ -79,7 +79,7 @@ from telegram import *
 from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, Filters
 
 
-PORT = int(os.environ.get('PORT', 5000))
+PORT = int(os.environ.get('PORT', 8443))
 
 def get_download_url_from_api(url):
     API_URL = "https://getvideo.p.rapidapi.com/"
@@ -114,8 +114,10 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(MessageHandler(Filters.all & ~Filters.command, textHandler, run_async=True))
     # updater.start_polling()
-    updater.start_webhook(listen='0.0.0.0', port=int(PORT), url_path=TOKEN)
-    updater.bot.setWebhook('https://youtubetelegrambot.herokuapp.com/'+TOKEN)
+    # updater.start_webhook(listen='0.0.0.0', port=int(PORT), url_path=TOKEN)
+    updater.start_webhook(listen="0.0.0.0", port=PORT, url_path=TOKEN,
+                          webhook_url='https://youtubetelegrambot.herokuapp.com/'+TOKEN)
+    # updater.bot.setWebhook('https://youtubetelegrambot.herokuapp.com/'+TOKEN)
 
     updater.idle()
 
