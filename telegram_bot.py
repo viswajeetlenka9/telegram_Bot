@@ -73,14 +73,13 @@
 #
 # if __name__ == "__main__":
 #     main()
-
+import os
 import requests
 from telegram import *
 from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, Filters
-from config import BotFather_config
 
 
-
+PORT = int(os.environ.get('PORT', 5000))
 
 def get_download_url_from_api(url):
     API_URL = "https://getvideo.p.rapidapi.com/"
@@ -110,12 +109,13 @@ def textHandler(update: Update, context: CallbackContext) -> None:
 
 
 def main():
-    updater = Updater(BotFather_config.TOKEN, use_context=True)
+    TOKEN = "5195793507:AAF5dfs4l4MXjU2kXOfsU9-DLgb5MBxONIc"
+    updater = Updater(TOKEN, use_context=True)
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(MessageHandler(Filters.all & ~Filters.command, textHandler, run_async=True))
     # updater.start_polling()
-    updater.start_webhook(listen='0.0.0.0', port=int(BotFather_config.PORT), url_path=BotFather_config.TOKEN)
-    updater.bot.setWebhook('https://youtubetelegrambot.herokuapp.com/'+BotFather_config.TOKEN)
+    updater.start_webhook(listen='0.0.0.0', port=int(PORT), url_path=TOKEN)
+    updater.bot.setWebhook('https://youtubetelegrambot.herokuapp.com/'+TOKEN)
 
     updater.idle()
 
