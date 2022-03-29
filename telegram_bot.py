@@ -75,37 +75,69 @@
 #     main()
 import os
 import requests
+import json
 from telegram import *
 from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, Filters
 
 
 PORT = int(os.environ.get('PORT', 8443))
 
-def get_download_url_from_api(url):
-    API_URL = "https://getvideo.p.rapidapi.com/"
-    query_string = {"url": f"{url}"}
+# def get_download_url_from_api(url):
+#     API_URL = "https://getvideo.p.rapidapi.com/"
+#     query_string = {"url": f"{url}"}
+#
+#     headers = {
+#         'x-rapidapi-host': "getvideo.p.rapidapi.com",
+#         'x-rapidapi-key': "b71057ccbdmshbdb08c316cac5c0p17d423jsna96364d48563"
+#     }
+#
+#     response = requests.get(API_URL, headers=headers, params=query_string)
+#     data = response.json()
+#     return data['streams'][0]['url']
 
-    headers = {
-        'x-rapidapi-host': "getvideo.p.rapidapi.com",
-        'x-rapidapi-key': "b71057ccbdmshbdb08c316cac5c0p17d423jsna96364d48563"
-    }
 
-    response = requests.get(API_URL, headers=headers, params=query_string)
-    data = response.json()
-    return data['streams'][0]['url']
+def get_geocode_by_zip(zip_code) -> json:
+    try:
+        url = "http://api.openweathermap.org/geo/1.0/zip"
+        api_key = "750db2c36ce85ba0b2119e948668e970"
+        params = {"zip": f"{zip_code},IN", "appid": api_key}
+
+        response = requests.get(url=url, params=params)
+        print(response)
+        return response.json()
+    except Exception as ex:
+        return "Geo location not present in India"
+
+
+def get_current_weather_of_geocode(lat, lon):
+    url = "https://api.openweathermap.org/data/2.5/weather"
+    api_key = "750db2c36ce85ba0b2119e948668e970"
+    params = {"lat": lat, "lon": lon, "appid": api_key}
+
+    response = requests.get(url=url, params=params)
+    print(response)
+    return response.json()
 
 
 def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text(text='Welcome to URL downloader!\nPlease provide a valid URL')
+    update.message.reply_text(text='Welcome to Weather Update!\nPlease provide a zip code')
 
 
 def textHandler(update: Update, context: CallbackContext) -> None:
     user_message = str(update.message.text)
+
     # if update.message.parse_entities(types=MessageEntity.URL):
     #     download_url = get_download_url_from_api(user_message)
     #     update.message.reply_text(text="You sent a valid URL!", quote=True)
     #     update.message.reply_text(text=f"Your download url is : {download_url}")
-    update.message.reply_text(user_message)
+    if len(user_message) != 6:
+        update.message.reply_text(text="Please provide a valid pin code")
+    result_geocode = get_geocode_by_zip(user_message)
+    if result_geocode:
+        res = get_current_weather_of_geocode(result_geocode.get('lat'),result_geocode.get('lon'))
+        update.message.reply_text(res.json())
+    else:
+        update.message.reply_text(text="Provided pin code could not be found in India")
 
 
 def main():
