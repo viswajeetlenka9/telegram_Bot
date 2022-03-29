@@ -154,10 +154,10 @@ def main():
     updater = Updater(TOKEN, use_context=True)
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(MessageHandler(Filters.all & ~Filters.command, textHandler, run_async=True))
-    updater.start_polling()
+    # updater.start_polling()
     # updater.start_webhook(listen='0.0.0.0', port=int(PORT), url_path=TOKEN)
-    # updater.start_webhook(listen="0.0.0.0", port=PORT, url_path=TOKEN,
-    #                       webhook_url='https://youtubetelegrambot.herokuapp.com/' + TOKEN)
+    updater.start_webhook(listen="0.0.0.0", port=PORT, url_path=TOKEN,
+                          webhook_url='https://youtubetelegrambot.herokuapp.com/' + TOKEN)
     # updater.bot.setWebhook('https://youtubetelegrambot.herokuapp.com/'+TOKEN)
 
     updater.idle()
