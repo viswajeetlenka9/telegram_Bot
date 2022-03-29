@@ -103,7 +103,6 @@ def get_geocode_by_zip(zip_code) -> json:
         params = {"zip": f"{zip_code},IN", "appid": api_key}
 
         response = requests.get(url=url, params=params)
-        print(response)
         return response.json()
     except Exception as ex:
         return "Geo location not present in India"
@@ -115,7 +114,6 @@ def get_current_weather_of_geocode(lat, lon):
     params = {"lat": lat, "lon": lon, "appid": api_key}
 
     response = requests.get(url=url, params=params)
-    print(response)
     return response.json()
 
 
@@ -135,7 +133,12 @@ def textHandler(update: Update, context: CallbackContext) -> None:
     result_geocode = get_geocode_by_zip(user_message)
     if result_geocode:
         res = get_current_weather_of_geocode(result_geocode.get('lat'),result_geocode.get('lon'))
-        update.message.reply_text(res.json())
+        weather_result_text = 'Weather = {0}\n' \
+                              'Tempertaure = {1}\n' \
+                              'Feels like = {2}'.format(res.get('weather')[0].get('description'),
+                                                        round(float(res.get('main').get('temp'))-273.15,2),
+                                                        round(float(res.get('main').get('feels_like'))-273.15,2))
+        update.message.reply_text(weather_result_text)
     else:
         update.message.reply_text(text="Provided pin code could not be found in India")
 
