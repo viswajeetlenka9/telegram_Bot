@@ -75,31 +75,37 @@
 #     main()
 import os
 import requests
-import json
+from dotenv import load_dotenv
+from cryptography.fernet import Fernet
 from telegram import *
 from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, Filters
 
+load_dotenv('.env')
+
+OPEN_WEATHER_ID = os.environ.get("OPEN_WEATHER_ID")
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 
 PORT = int(os.environ.get('PORT', 8443))
-
-# def get_download_url_from_api(url):
-#     API_URL = "https://getvideo.p.rapidapi.com/"
-#     query_string = {"url": f"{url}"}
-#
-#     headers = {
-#         'x-rapidapi-host': "getvideo.p.rapidapi.com",
-#         'x-rapidapi-key': "b71057ccbdmshbdb08c316cac5c0p17d423jsna96364d48563"
-#     }
-#
-#     response = requests.get(API_URL, headers=headers, params=query_string)
-#     data = response.json()
-#     return data['streams'][0]['url']
+key = Fernet.generate_key()
 
 
-def get_geocode_by_zip(zip_code) -> json:
+def encrypt_message(message: bytes, key: bytes):
+    return Fernet(key).encrypt(message)
+
+
+def decrypt_message(token: bytes, key: bytes):
+    return Fernet(key).decrypt(token)
+
+
+open_weather_token = encrypt_message(OPEN_WEATHER_ID.encode(), key)
+
+telegram_token = encrypt_message(TELEGRAM_TOKEN.encode(), key)
+
+
+def get_geocode_by_zip(zip_code):
     try:
         url = "http://api.openweathermap.org/geo/1.0/zip"
-        api_key = "750db2c36ce85ba0b2119e948668e970"
+        api_key = decrypt_message(open_weather_token, key).decode()
         params = {"zip": f"{zip_code},IN", "appid": api_key}
 
         response = requests.get(url=url, params=params)
@@ -108,9 +114,9 @@ def get_geocode_by_zip(zip_code) -> json:
         return "Geo location not present in India"
 
 
-def get_current_weather_of_geocode(lat, lon):
+def get_current_weather_by_geocode(lat, lon):
     url = "https://api.openweathermap.org/data/2.5/weather"
-    api_key = "750db2c36ce85ba0b2119e948668e970"
+    api_key = decrypt_message(open_weather_token, key).decode()
     params = {"lat": lat, "lon": lon, "appid": api_key}
 
     response = requests.get(url=url, params=params)
@@ -132,26 +138,26 @@ def textHandler(update: Update, context: CallbackContext) -> None:
         update.message.reply_text(text="Please provide a valid pin code")
     result_geocode = get_geocode_by_zip(user_message)
     if result_geocode:
-        res = get_current_weather_of_geocode(result_geocode.get('lat'),result_geocode.get('lon'))
+        res = get_current_weather_by_geocode(result_geocode.get('lat'), result_geocode.get('lon'))
         weather_result_text = 'Weather = {0}\n' \
                               'Tempertaure = {1}\n' \
                               'Feels like = {2}'.format(res.get('weather')[0].get('description'),
-                                                        round(float(res.get('main').get('temp'))-273.15,2),
-                                                        round(float(res.get('main').get('feels_like'))-273.15,2))
+                                                        round(float(res.get('main').get('temp')) - 273.15, 2),
+                                                        round(float(res.get('main').get('feels_like')) - 273.15, 2))
         update.message.reply_text(weather_result_text)
     else:
         update.message.reply_text(text="Provided pin code could not be found in India")
 
 
 def main():
-    TOKEN = "5195793507:AAF5dfs4l4MXjU2kXOfsU9-DLgb5MBxONIc"
+    TOKEN = decrypt_message(telegram_token, key).decode()
     updater = Updater(TOKEN, use_context=True)
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(MessageHandler(Filters.all & ~Filters.command, textHandler, run_async=True))
-    # updater.start_polling()
+    updater.start_polling()
     # updater.start_webhook(listen='0.0.0.0', port=int(PORT), url_path=TOKEN)
-    updater.start_webhook(listen="0.0.0.0", port=PORT, url_path=TOKEN,
-                          webhook_url='https://youtubetelegrambot.herokuapp.com/'+TOKEN)
+    # updater.start_webhook(listen="0.0.0.0", port=PORT, url_path=TOKEN,
+    #                       webhook_url='https://youtubetelegrambot.herokuapp.com/' + TOKEN)
     # updater.bot.setWebhook('https://youtubetelegrambot.herokuapp.com/'+TOKEN)
 
     updater.idle()
