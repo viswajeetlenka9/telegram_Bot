@@ -1,5 +1,5 @@
 # Telegram Bot
-This is a telegram bot created using python which can give the current weather update by pic code of a location within India.
+This is a telegram bot created using python which can give the current weather update by zip code of a location within India.
 
 # How to use :
 - Open Telegram App
