@@ -5,4 +5,4 @@ This is a telegram bot created using python which can give the current weather u
 - Open Telegram App
 - Search for "@babu_youtube_bot"
 - Send "/start" to start the bot for your device.
-- Provide the zip code of your area/ the area your want weather updates of.
+- Provide the zip code of your area or the area your want weather updates of.
